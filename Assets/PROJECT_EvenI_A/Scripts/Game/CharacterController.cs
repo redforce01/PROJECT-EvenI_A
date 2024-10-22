@@ -1,27 +1,48 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Even
 {
+    // í•œê¸€ë¡œ ì£¼ì„ì„ ì ì—ˆìŒ.
+
     public class CharacterController : MonoBehaviour
     {
-        // => WASD => »óÇÏÁÂ¿ì ÀÌµ¿
-        // => WASD Å°¸¦ ´­·¶´Â°¡? ¾Ë¾Æ¿À´Â ¹æ¹ý
-        // => Å°¸¦ ´­·¶´Ù¸é Ä³¸¯ÅÍ¸¦ ¿òÁ÷ÀÎ´Ù.
-        // => Ä³¸¯ÅÍ¸¦ ¿òÁ÷ÀÎ´Ù : character(GameObject)ÀÇ transform À» ¿òÁ÷ÀÎ´Ù.
+        // => WASD => ìƒí•˜ì¢Œìš° ì´ë™
+        // => WASD í‚¤ë¥¼ ëˆŒë €ëŠ”ê°€? ì•Œì•„ì˜¤ëŠ” ë°©ë²•
+        // => í‚¤ë¥¼ ëˆŒë €ë‹¤ë©´ ìºë¦­í„°ë¥¼ ì›€ì§ì¸ë‹¤.
+        // => ìºë¦­í„°ë¥¼ ì›€ì§ì¸ë‹¤ : character(GameObject)ì˜ transform ì„ ì›€ì§ì¸ë‹¤.
 
         public float speed = 3.0f;
         public float walkSpeed = 2.0f;
         public float runSpeed = 7.0f;
         public bool isRunning = false;
 
-        // C#¿¡¼­´Â Á¢±ÙÇÑÁ¤ÀÚ°¡ ¾Õ¿¡ »ý·«µÇ¾îÀÖÀ¸¸é => private
+        public Animator characterAnimator; // ì¸ìŠ¤íŽ™í„°ì°½ì—ì„œ Drag & Dropì„ í•´ì„œ ì—°ê²°ì‹œì¼œì¤„ ì˜ˆì •
+
+        public float maxStamina = 100f;
+        public float curStamina = 0f;
+
+        public UnityEngine.UI.Image staminaBar;
+
+        [SerializeField] private float blendSpeed = 10.0f;
+
+        private float horizontalBlend;
+        private float verticalBlend;
+
+        private void Awake()
+        {
+            curStamina = maxStamina;
+        }
+
+        // C#ì—ì„œëŠ” ì ‘ê·¼í•œì •ìžê°€ ì•žì— ìƒëžµë˜ì–´ìžˆìœ¼ë©´ => private
         void Update()
         {
-            isRunning = Input.GetKey(KeyCode.LeftShift);
+            staminaBar.fillAmount = curStamina / maxStamina;
 
-            // Vector 2 : x, y °ªÀÌ µé¾îÀÖ´Â ±¸Á¶Ã¼
+            isRunning = Input.GetKey(KeyCode.LeftShift);
+            // Vector 2 : x, y ê°’ì´ ë“¤ì–´ìžˆëŠ” êµ¬ì¡°ì²´
             Vector2 input = new Vector2();
             if (Input.GetKey(KeyCode.W))
             {
@@ -43,8 +64,18 @@ namespace Even
                 input.x += 1;
             }
 
-            Vector3 movement = new Vector3();
 
+            if (isRunning && input.magnitude > 0)
+            {
+                curStamina -= Time.deltaTime * 10;
+            }
+            else
+            {
+                curStamina += Time.deltaTime * 10;
+            }
+
+
+            Vector3 movement = new Vector3();
             speed = isRunning ? runSpeed : walkSpeed;
             movement.x = input.x * speed * Time.deltaTime;
             movement.z = input.y * speed * Time.deltaTime;
@@ -52,6 +83,15 @@ namespace Even
             float mouseX = Input.GetAxis("Mouse X");
             transform.rotation = Quaternion.Euler(0, transform.rotation.eulerAngles.y + mouseX, 0);
             transform.Translate(movement);
+
+
+
+            horizontalBlend = Mathf.Lerp(horizontalBlend, input.x, Time.deltaTime * blendSpeed);
+            verticalBlend = Mathf.Lerp(verticalBlend, input.y, Time.deltaTime * blendSpeed);
+
+            characterAnimator.SetFloat("Speed", input.magnitude > 0 ? (isRunning ? 3.0f : 1.0f) : 0f);
+            characterAnimator.SetFloat("Horizontal", horizontalBlend);
+            characterAnimator.SetFloat("Vertical", verticalBlend);
         }
     }
 }
